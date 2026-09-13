@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>スマホ利用ログ</title>
+<style>
+:root{
+  --paper:#F6F7F4;--ink:#1F2926;--ink-2:#5E6864;--ink-3:#9AA39F;--line:#DDE1DD;--card:#FFFFFF;
+  --purpose:#3E7A3A;--purpose-bg:#E6F1E3;--idle:#7E5273;--idle-bg:#F0E5EE;--none:#E9ECE9;
+  --x:#2E3A38;--yt:#C9705A;--tt:#2F8F86;--ot:#B9C0BC;--r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Hiragino Sans","Noto Sans JP",system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.6}
+body{padding:0 0 3rem}
+header{position:sticky;top:0;background:var(--paper);padding:env(safe-area-inset-top) 16px 0;z-index:2}
+.hbar{display:flex;justify-content:space-between;align-items:center;padding:12px 0 8px}
+h1{font-size:15px;font-weight:500;margin:0;color:var(--ink-2)}
+.hbtn{border:1px solid var(--line);background:none;border-radius:8px;font:inherit;font-size:12px;color:var(--idle);padding:4px 10px;min-height:30px}
+.tools{display:flex;gap:8px;margin-top:16px}
+.tools button{flex:1;min-height:44px;border:1px solid var(--line);background:var(--card);border-radius:10px;font:inherit;font-size:14px;color:var(--ink)}
+nav{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--line)}
+nav button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 0;font:inherit;font-size:15px;color:var(--ink-3);margin-bottom:-1px}
+nav button.on{color:var(--ink);border-color:var(--ink)}
+main{padding:16px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.q{font-size:13px;color:var(--ink-2);margin:0 0 6px}
+textarea{width:100%;min-height:160px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:13px;font-family:ui-monospace,Menlo,monospace;padding:10px;color:var(--ink);background:var(--card)}
+input[type=text],select{width:100%;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit;font-size:15px;padding:0 12px;color:var(--ink)}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--purpose);outline-offset:1px}
+.primary{width:100%;min-height:50px;margin-top:12px;border:0;border-radius:10px;background:var(--ink);color:#fff;font:inherit;font-size:16px}
+.msg{font-size:13px;color:var(--ink-2);min-height:20px;margin:8px 0 0}
+.msg.ok{color:var(--purpose)}.msg.ng{color:var(--idle)}
+.hint{font-size:13px;color:var(--ink-3);margin:10px 0 0;line-height:1.6}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.stat p{margin:0}.stat .l{font-size:12px;color:var(--ink-2)}
+.stat .v{font-size:24px;font-weight:500;line-height:1.3}
+.stat .v small{font-size:12px;color:var(--ink-2);font-weight:400;margin-left:2px}
+.chart-title{font-size:14px;font-weight:500;margin:18px 0 6px}
+.chart-title.first{margin-top:0}
+svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-2);margin:6px 0 0}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.sess{border-top:1px solid var(--line);padding:10px 0}
+.sess:last-child{border-bottom:1px solid var(--line)}
+.sess .head{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
+.sess .head .t{color:var(--ink-3);font-size:12px;margin-right:6px}
+.sess .head .m{font-weight:500}
+.tog{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.tl{font-size:11px;color:var(--ink-3);margin:8px 0 -4px}
+.chk{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:14px;margin:0 0 8px}
+.chk label{display:inline-flex;align-items:center;gap:5px;min-height:32px}
+.chk input{width:18px;height:18px;accent-color:var(--ink)}
+.tog button{min-height:38px;border:1px solid var(--line);background:var(--paper);border-radius:8px;font:inherit;font-size:13px;color:var(--ink-2);padding:0 4px}
+.tog button.p{background:var(--purpose-bg);color:var(--purpose);border-color:var(--purpose-bg)}
+.tog button.i{background:var(--idle-bg);color:var(--idle);border-color:var(--idle-bg)}
+.sess input[type=text]{min-height:36px;font-size:13px;margin-top:6px;padding:0 10px}
+.pill{font-size:11px;padding:1px 7px;border-radius:6px;margin-left:4px;white-space:nowrap}
+.pill.p{background:var(--purpose-bg);color:var(--purpose)}
+.pill.i{background:var(--idle-bg);color:var(--idle)}
+.pill.n{background:var(--none);color:var(--ink-3)}
+.log{margin:0;padding:0;list-style:none}
+.log .day{font-size:13px;color:var(--ink-2);margin:16px 0 4px}
+.log li.e{border-top:1px solid var(--line);padding:9px 0;font-size:14px}
+.log li.e:last-child{border-bottom:1px solid var(--line)}
+.meta{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.meta .t{color:var(--ink-3);font-size:12px;margin-right:6px}
+.memo{color:var(--ink-2);font-size:13px;margin:2px 0 0}
+.empty{color:var(--ink-3);font-size:14px;text-align:center;padding:24px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
+th{font-weight:500;color:var(--ink-2)}
+th:first-child,td:first-child{text-align:left}
+.dayrow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.dayrow select{flex:1}
+.savebar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:rgba(246,247,244,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:3}
+.savebar .primary{margin-top:0}
+.savebar .msg{margin:4px 0 0;min-height:0;text-align:center}
+#sec-rev{padding-bottom:110px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hbar"><h1>スマホ利用ログ</h1><button class="hbtn" onclick="clearAll()">全消去</button></div>
+  <nav>
+    <button id="tab-imp" class="on" onclick="showTab('imp')">取り込み</button>
+    <button id="tab-rev" onclick="showTab('rev')">レビュー</button>
+    <button id="tab-sum" onclick="showTab('sum')">集計</button>
+  </nav>
+</header>
+<main>
+
+<section id="sec-imp" class="on">
+  <div class="card">
+    <p class="q">メモのログを貼り付け</p>
+    <textarea id="raw" placeholder="X,2026/09/12 21:00,open&#10;,2026/09/12 21:01,close&#10;TikTok,2026/09/12 21:07,open&#10;,2026/09/12 21:11,close"></textarea>
+    <p class="q" style="margin-top:12px">同じアプリを何分以内ならつなぐ</p>
+    <select id="gap"><option value="1">1分</option><option value="2" selected>2分</option><option value="3">3分</option><option value="5">5分</option></select>
+    <button class="primary" onclick="importLog()">取り込む</button>
+    <p class="msg" id="imsg"></p>
+    <p class="hint">closeの行はアプリ名が空でも直前のopenで補います。連続したcloseは1つにまとめ、同じ日時でopenが続いた場合もつなぎます。すでに取り込み済みのセッションは重複しません。</p>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <p class="q">バックアップ（JSON）</p>
+    <div class="tools" style="margin-top:0">
+      <button onclick="exportJson()">書き出す</button>
+      <button onclick="document.getElementById('jfile').click()">読み込む</button>
+    </div>
+    <input type="file" id="jfile" accept=".json,application/json" style="display:none" onchange="importJson(this)">
+    <p class="msg" id="jmsg"></p>
+    <p class="hint">読み込みは追加方式で、同じセッションは重複しません。レビュー内容も含めて保存されます。</p>
+    <div class="tools"><button onclick="seed()" style="color:var(--ink-3)">サンプルデータを入れる</button></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><p class="l">セッション数</p><p class="v" id="s-n">0<small>件</small></p></div>
+    <div class="stat"><p class="l">未レビュー</p><p class="v" id="s-un">0<small>件</small></p></div>
+  </div>
+</section>
+
+<section id="sec-rev">
+  <div class="dayrow"><select id="revday" onchange="renderRev()"></select></div>
+  <div class="card" id="revbox"></div>
+  <div class="savebar" id="savebar">
+    <button class="primary" id="revsave" onclick="saveRev()">保存</button>
+    <p class="msg" id="rmsg"></p>
+  </div>
+</section>
+
+<section id="sec-sum">
+  <p class="chart-title first">タイムライン（直近7日）</p>
+  <div class="card" style="padding:12px 8px 8px">
+    <svg id="c0" viewBox="0 0 340 300" role="img" aria-label="日ごとのタイムライン"></svg>
+    <div class="legend">
+      <span style="--c:var(--x)">X</span><span style="--c:var(--yt)">YouTube</span><span style="--c:var(--tt)">TikTok</span><span style="--c:var(--ot)">その他</span>
+    </div>
+  </div>
+
+  <p class="chart-title">日ごとの使用時間（アプリ別）</p>
+  <div class="card" style="padding:12px 8px 8px">
+    <svg id="c1" viewBox="0 0 340 200" role="img" aria-label="日ごとのアプリ別使用時間"></svg>
+  </div>
+
+  <p class="chart-title">アプリ別の回数と平均時間（直近7日）</p>
+  <div class="card" style="padding:8px 12px"><table id="apptab"></table></div>
+
+  <p class="chart-title">満足と虚しいの時間</p>
+  <div class="chk" id="fapp">
+    <label><input type="checkbox" value="X" checked onchange="renderSum()">X</label>
+    <label><input type="checkbox" value="YouTube" checked onchange="renderSum()">YouTube</label>
+    <label><input type="checkbox" value="TikTok" checked onchange="renderSum()">TikTok</label>
+    <label><input type="checkbox" value="その他" checked onchange="renderSum()">その他</label>
+  </div>
+  <div class="chk" id="fwhy">
+    <label><input type="checkbox" value="目的" checked onchange="renderSum()">目的があって見た</label>
+    <label><input type="checkbox" value="惰性" checked onchange="renderSum()">惰性で見た</label>
+  </div>
+  <div class="card" style="padding:12px 8px 8px">
+    <svg id="c2" viewBox="0 0 340 200" role="img" aria-label="日ごとの満足と虚しいの時間"></svg>
+    <div class="legend">
+      <span style="--c:var(--purpose)">満足</span><span style="--c:var(--idle)">虚しい</span><span style="--c:var(--none)">未レビュー</span>
+    </div>
+  </div>
+
+  <ul class="log" id="list"></ul>
+
+</section>
+</main>
+
+<script>
+var KEY='phone-log-v2', S=[];
+var COL={X:'var(--x)',YouTube:'var(--yt)',TikTok:'var(--tt)','その他':'var(--ot)'};
+var APPS=['X','YouTube','TikTok','その他'];
+
+async function load(){
+  try{ if(window.storage){var r=await window.storage.get(KEY,false); S=r&&r.value?JSON.parse(r.value):[]; return;} }catch(e){}
+  try{ var s=localStorage.getItem(KEY); S=s?JSON.parse(s):[]; }catch(e){ S=[]; }
+}
+async function persist(){
+  var s=JSON.stringify(S);
+  try{ if(window.storage){ await window.storage.set(KEY,s,false); return; } }catch(e){}
+  try{ localStorage.setItem(KEY,s); }catch(e){}
+}
+
+function dkey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function hm(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function normApp(a){ a=(a||'').trim(); if(!a) return null; var l=a.toLowerCase(); if(l==='x'||l==='twitter') return 'X'; if(l.indexOf('youtube')>=0) return 'YouTube'; if(l.indexOf('tiktok')>=0||l.indexOf('ticktock')>=0) return 'TikTok'; return APPS.indexOf(a)>=0?a:'その他'; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+function parseRaw(text,gapMin){
+  var ev=[], cur=null;
+  text.split(/\r?\n/).forEach(function(line){
+    var p=line.split(','); if(p.length<3) return;
+    var m=p[1].trim().match(/(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/); if(!m) return;
+    var ts=new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]).getTime(), kind=p[2].trim().toLowerCase();
+    var app=normApp(p[0]);
+    if(kind==='open'){ if(app) cur=app; ev.push({ts:ts,k:'open',app:app||cur}); }
+    else if(kind==='close'){ ev.push({ts:ts,k:'close',app:app||cur}); }
+  });
+  ev.sort(function(a,b){return a.ts-b.ts;});
+  var raw=[], openAt=null, openApp=null;
+  ev.forEach(function(e){
+    if(e.k==='open'){ if(openAt!==null&&openApp) raw.push({app:openApp,s:openAt,e:e.ts}); openAt=e.ts; openApp=e.app; }
+    else { if(openAt!==null&&openApp){ raw.push({app:openApp,s:openAt,e:Math.max(e.ts,openAt)}); openAt=null; } }
+  });
+  if(openAt!==null&&openApp) raw.push({app:openApp,s:openAt,e:openAt,open:true});
+  var gap=gapMin*60000, out=[];
+  raw.forEach(function(r){
+    var last=out[out.length-1];
+    if(last&&last.app===r.app&&r.s-last.e<=gap){ last.e=Math.max(last.e,r.e); }
+    else out.push({app:r.app,s:r.s,e:r.e});
+  });
+  return out.filter(function(r){ return r.app; });
+}
+
+async function importLog(){
+  var msg=document.getElementById('imsg'), txt=document.getElementById('raw').value;
+  var ses=parseRaw(txt,+document.getElementById('gap').value);
+  if(!ses.length){ msg.className='msg ng'; msg.textContent='読み取れる行がありませんでした。形式を確認してください'; return; }
+  var added=0;
+  ses.forEach(function(r){
+    var dup=S.some(function(x){ return x.app===r.app&&Math.abs(x.ts-r.s)<60000; });
+    if(dup) return;
+    var d=new Date(r.s);
+    S.push({ts:r.s,end:r.e,day:dkey(d),time:hm(d),app:r.app,min:Math.max(1,Math.round((r.e-r.s)/60000)),why:null,feel:null,memo:''});
+    added++;
+  });
+  S.sort(function(a,b){return a.ts-b.ts;});
+  await persist();
+  msg.className='msg ok'; msg.textContent=ses.length+'セッションを検出、'+added+'件を追加しました';
+  document.getElementById('raw').value='';
+  renderAll();
+}
+
+function renderStats(){
+  document.getElementById('s-n').innerHTML=S.length+'<small>件</small>';
+  document.getElementById('s-un').innerHTML=S.filter(function(x){return !x.feel;}).length+'<small>件</small>';
+}
+
+function dayList(){ var m={}; S.forEach(function(x){m[x.day]=1;}); return Object.keys(m).sort().reverse(); }
+function fillDays(sel){
+  var days=dayList(), keep=sel.value;
+  sel.innerHTML=days.length?days.map(function(d){var p=d.split('-');return '<option value="'+d+'">'+(+p[1])+'月'+(+p[2])+'日</option>';}).join(''):'<option value="">記録なし</option>';
+  if(days.indexOf(keep)>=0) sel.value=keep;
+}
+
+var draft={};
+function renderRev(){
+  var sel=document.getElementById('revday'); fillDays(sel);
+  var day=sel.value, box=document.getElementById('revbox');
+  var rows=S.filter(function(x){return x.day===day;});
+  draft={};
+  if(!rows.length){ box.innerHTML='<p class="empty">この日の記録はありません</p>'; document.getElementById('savebar').style.display='none'; return; }
+  document.getElementById('savebar').style.display='block';
+  var tot=rows.reduce(function(a,x){return a+x.min;},0);
+  var h='<p class="q">合計 '+tot+'分 / '+rows.length+'回。印を付けて「保存」を押してください</p>';
+  rows.forEach(function(x){
+    var i=S.indexOf(x); draft[i]={why:x.why,feel:x.feel,memo:x.memo||''};
+    h+='<div class="sess" id="s'+i+'"><div class="head"><div><span class="t">'+x.time+'〜'+hm(new Date(x.end))+'</span>'+x.app+'</div><span class="m">'+x.min+'分</span></div>'
+      +'<p class="tl">見た理由</p><div class="tog">'
+      +'<button data-k="why" data-v="目的" class="'+(x.why==='目的'?'p':'')+'" onclick="pickD('+i+',this)">目的があって見た</button>'
+      +'<button data-k="why" data-v="惰性" class="'+(x.why==='惰性'?'i':'')+'" onclick="pickD('+i+',this)">惰性で見た</button></div>'
+      +'<p class="tl">見た後の気持ち</p><div class="tog">'
+      +'<button data-k="feel" data-v="満足" class="'+(x.feel==='満足'?'p':'')+'" onclick="pickD('+i+',this)">満足</button>'
+      +'<button data-k="feel" data-v="虚しい" class="'+(x.feel==='虚しい'?'i':'')+'" onclick="pickD('+i+',this)">虚しい</button></div>'
+      +'<input type="text" placeholder="一言（任意）" value="'+esc(x.memo||'')+'" oninput="draft['+i+'].memo=this.value"></div>';
+  });
+  box.innerHTML=h;
+}
+function pickD(i,btn){
+  var k=btn.dataset.k, v=btn.dataset.v;
+  draft[i][k]=draft[i][k]===v?null:v;
+  var wrap=btn.parentNode;
+  wrap.querySelectorAll('button').forEach(function(b){ b.className=(draft[i][k]===b.dataset.v)?(b.dataset.v==='目的'||b.dataset.v==='満足'?'p':'i'):''; });
+}
+async function saveRev(){
+  var n=0;
+  Object.keys(draft).forEach(function(i){ var d=draft[i], x=S[i]; if(x.why!==d.why||x.feel!==d.feel||(x.memo||'')!==d.memo){ x.why=d.why; x.feel=d.feel; x.memo=d.memo; n++; } });
+  await persist(); renderStats();
+  var m=document.getElementById('rmsg'); m.className='msg ok'; m.textContent=n+'件を保存しました'; setTimeout(function(){m.textContent='';},2500);
+}
+
+function lastDays(n){ var out=[], d=new Date(); for(var i=n-1;i>=0;i--){ out.push(dkey(new Date(d.getFullYear(),d.getMonth(),d.getDate()-i))); } return out; }
+
+function stackedBars(svg,days,series){
+  var W=340,H=200,pl=34,pr=6,pt=10,pb=26, cw=(W-pl-pr)/days.length;
+  var maxV=0; days.forEach(function(dd){ var s=0; series.forEach(function(sr){ s+=sr.data[dd]||0; }); if(s>maxV) maxV=s; });
+  var scaleMax=Math.max(60,Math.ceil(maxV/60)*60), h='';
+  for(var v=0; v<=scaleMax; v+=scaleMax/3){
+    var y=pt+(H-pt-pb)*(1-v/scaleMax);
+    h+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="#E5E9E5"/>';
+    h+='<text x="'+(pl-6)+'" y="'+(y+4).toFixed(1)+'" font-size="10" fill="#9AA39F" text-anchor="end">'+(v>=60?Math.round(v/60*10)/10+'h':v+'m')+'</text>';
+  }
+  days.forEach(function(dd,i){
+    var x=pl+cw*i+cw*0.2, bw=cw*0.6, yTop=H-pb;
+    series.forEach(function(sr){ var v=sr.data[dd]||0; if(!v) return; var bh=(H-pt-pb)*v/scaleMax; yTop-=bh;
+      h+='<rect x="'+x.toFixed(1)+'" y="'+yTop.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" fill="'+sr.color+'"/>'; });
+    var p=dd.split('-'); h+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-8)+'" font-size="10" fill="#5E6864" text-anchor="middle">'+(+p[1])+'/'+(+p[2])+'</text>';
+  });
+  svg.innerHTML=h;
+}
+
+function renderTimeline(){
+  var days=lastDays(7), svg=document.getElementById('c0'), W=340,H=300,pl=34,pr=6,pt=8,pb=22, ph=H-pt-pb, cw=(W-pl-pr)/days.length, h='';
+  for(var hr=0;hr<=24;hr+=3){ var y=pt+ph*hr/24;
+    h+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="#E5E9E5"/>';
+    h+='<text x="'+(pl-6)+'" y="'+(y+4).toFixed(1)+'" font-size="10" fill="#9AA39F" text-anchor="end">'+hr+':00</text>'; }
+  days.forEach(function(dd,i){
+    var x0=pl+cw*i, p=dd.split('-');
+    if(i) h+='<line x1="'+x0.toFixed(1)+'" x2="'+x0.toFixed(1)+'" y1="'+pt+'" y2="'+(pt+ph)+'" stroke="#EEF1EE"/>';
+    var rows=S.filter(function(x){return x.day===dd;}), tot=0;
+    rows.forEach(function(x){
+      var d0=new Date(x.ts), d1=new Date(x.end), a=(d0.getHours()*60+d0.getMinutes())/1440, b=(d1.getDate()!==d0.getDate())?1:Math.min(1,(d1.getHours()*60+d1.getMinutes()+1)/1440);
+      var yy=pt+ph*a, hh=Math.max(1.5,ph*(b-a)); tot+=x.min;
+      h+='<rect x="'+(x0+cw*0.2).toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+(cw*0.6).toFixed(1)+'" height="'+hh.toFixed(1)+'" fill="'+COL[x.app]+'" rx="1"/>';
+    });
+    h+='<text x="'+(x0+cw/2).toFixed(1)+'" y="'+(H-8)+'" font-size="10" fill="#5E6864" text-anchor="middle">'+(+p[1])+'/'+(+p[2])+'</text>';
+    if(tot) h+='<text x="'+(x0+cw/2).toFixed(1)+'" y="'+(pt+ph+9)+'" font-size="8" fill="#9AA39F" text-anchor="middle" opacity="0">'+tot+'</text>';
+  });
+  svg.innerHTML=h;
+}
+
+function renderSum(){
+  var days=lastDays(7), recent=S.filter(function(x){return days.indexOf(x.day)>=0;});
+  var fa=[].map.call(document.querySelectorAll('#fapp input:checked'),function(c){return c.value;});
+  var fw=[].map.call(document.querySelectorAll('#fwhy input:checked'),function(c){return c.value;});
+  var bothWhy=fw.length===2;
+  function pass(l){ return fa.indexOf(l.app)>=0 && (bothWhy || (l.why&&fw.indexOf(l.why)>=0)); }
+  var s1=APPS.map(function(a){ return {color:COL[a],data:{}}; });
+  recent.forEach(function(l){ var i=APPS.indexOf(l.app); s1[i].data[l.day]=(s1[i].data[l.day]||0)+l.min; });
+  stackedBars(document.getElementById('c1'),days,s1);
+
+  var t='<tr><th>アプリ</th><th>回数</th><th>平均</th><th>合計</th></tr>';
+  APPS.forEach(function(a){ var r=recent.filter(function(x){return x.app===a;}); if(!r.length) return; var tot=r.reduce(function(s,x){return s+x.min;},0);
+    t+='<tr><td>'+a+'</td><td>'+r.length+'回</td><td>'+Math.round(tot/r.length)+'分</td><td>'+tot+'分</td></tr>'; });
+  document.getElementById('apptab').innerHTML=t;
+
+  var s2=[{color:'var(--purpose)',data:{}},{color:'var(--idle)',data:{}},{color:'var(--none)',data:{}}];
+  recent.forEach(function(l){ if(!pass(l))return; var k=l.feel==='満足'?0:l.feel==='虚しい'?1:2; s2[k].data[l.day]=(s2[k].data[l.day]||0)+l.min; });
+  stackedBars(document.getElementById('c2'),days,s2);
+
+  var list=document.getElementById('list'), rows=S.filter(pass).slice().sort(function(a,b){return b.ts-a.ts;});
+  if(!rows.length){ list.innerHTML='<li class="empty">まだ記録がありません</li>'; return; }
+  var h='', cur='';
+  rows.forEach(function(l){
+    if(l.day!==cur){ cur=l.day; var d=new Date(l.ts); h+='<li class="day">'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+'日月火水木金土'[d.getDay()]+'）</li>'; }
+    h+='<li class="e"><div class="meta"><div><span class="t">'+l.time+'</span>'+l.app+' '+l.min+'分</div><div>'
+      +(l.why?'<span class="pill '+(l.why==='目的'?'p':'i')+'">'+l.why+'</span>':'')
+      +(l.feel?'<span class="pill '+(l.feel==='満足'?'p':'i')+'">'+l.feel+'</span>':'<span class="pill n">未レビュー</span>')
+      +'</div></div>'+(l.memo?'<p class="memo">'+esc(l.memo)+'</p>':'')+'</li>';
+  });
+  list.innerHTML=h;
+}
+
+function renderAll(){ renderStats(); renderRev(); renderTimeline(); renderSum(); }
+function showTab(t){
+  ['imp','rev','sum'].forEach(function(k){ document.getElementById('sec-'+k).classList.toggle('on',k===t); document.getElementById('tab-'+k).classList.toggle('on',k===t); });
+  if(t==='rev'){ renderRev(); } if(t==='sum'){ renderTimeline(); renderSum(); }
+}
+
+async function seed(){
+  var now=new Date(), lines=[];
+  for(var i=6;i>=0;i--){
+    var n=4+Math.floor(Math.random()*4), t=8*60+Math.floor(Math.random()*60);
+    for(var j=0;j<n;j++){
+      var app=APPS[Math.random()<0.4?0:Math.random()<0.5?1:Math.random()<0.7?2:3];
+      var len=app==='X'?1+Math.floor(Math.random()*6):app==='その他'?2+Math.floor(Math.random()*8):10+Math.floor(Math.random()*50);
+      var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);
+      function f(m){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate(),Math.floor(m/60),m%60); return x.getFullYear()+'/'+String(x.getMonth()+1).padStart(2,'0')+'/'+String(x.getDate()).padStart(2,'0')+' '+hm(x); }
+      lines.push(app+','+f(t)+',open'); lines.push(','+f(t+len)+',close');
+      t+=len+20+Math.floor(Math.random()*120); if(t>23*60) break;
+    }
+  }
+  document.getElementById('raw').value=lines.join('\n');
+  await importLog();
+  S.forEach(function(x){ if(x.feel) return; if(Math.random()<0.7){ x.why=Math.random()<(x.app==='YouTube'?0.55:0.3)?'目的':'惰性'; x.feel=x.why==='目的'?(Math.random()<0.8?'満足':'虚しい'):(Math.random()<0.25?'満足':'虚しい'); } });
+  await persist(); renderAll();
+}
+async function clearAll(){
+  if(!S.length){ alert('記録はありません'); return; }
+  if(!confirm('すべての記録（'+S.length+'件）を消去します。この操作は元に戻せません。よろしいですか？')) return;
+  S=[]; await persist(); renderAll(); showTab('imp');
+}
+function exportJson(){
+  var m=document.getElementById('jmsg');
+  if(!S.length){ m.className='msg ng'; m.textContent='書き出す記録がありません'; return; }
+  var json=JSON.stringify({app:'smartphone-log',version:2,exported:new Date().toISOString(),sessions:S},null,1);
+  var name='smartphone-log-'+dkey(new Date())+'.json';
+  try{
+    var blob=new Blob([json],{type:'application/json'}), url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){URL.revokeObjectURL(url);},1000);
+    m.className='msg ok'; m.textContent=name+' を書き出しました（'+S.length+'件）';
+  }catch(e){ m.className='msg ng'; m.textContent='書き出しに失敗しました'; }
+}
+function importJson(inp){
+  var m=document.getElementById('jmsg'), f=inp.files&&inp.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=async function(){
+    try{
+      var d=JSON.parse(r.result), arr=Array.isArray(d)?d:d.sessions;
+      if(!Array.isArray(arr)) throw 0;
+      var added=0;
+      arr.forEach(function(x){
+        if(typeof x.ts!=='number'||!x.app) return;
+        if(S.some(function(y){return y.app===x.app&&Math.abs(y.ts-x.ts)<60000;})) return;
+        var d0=new Date(x.ts);
+        S.push({ts:x.ts,end:x.end||x.ts+(x.min||1)*60000,day:x.day||dkey(d0),time:x.time||hm(d0),app:normApp(x.app),min:x.min||1,why:x.why||null,feel:x.feel||null,memo:x.memo||''});
+        added++;
+      });
+      S.sort(function(a,b){return a.ts-b.ts;});
+      await persist(); renderAll();
+      m.className='msg ok'; m.textContent=arr.length+'件のうち'+added+'件を追加しました';
+    }catch(e){ m.className='msg ng'; m.textContent='JSONを読み取れませんでした。このアプリで書き出したファイルを選んでください'; }
+    inp.value='';
+  };
+  r.readAsText(f);
+}
+
+load().then(renderAll);
+</script>
+</body>
+</html>
