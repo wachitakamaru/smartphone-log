@@ -3,10 +3,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho+B1:wght@600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one-column phone app. Sticky 3-part nav bar → day list (FAB) / day sheet with a 30-min time ledger / settings. */
+/* Layout: one-column phone app. Sticky 3-part nav bar → day list (FAB) / day sheet with a 30-min time ledger / settings / manual. */
 :root{
   --paper:#f5f7f8; --sheet:#ffffff; --ink:#1d2a33; --muted:#66757f; --line:#dbe2e6;
-  --accent:#2f5d8a; --accent-ink:#ffffff; --accent-soft:#e3ecf5; --filled:#e8f1ea; --filled-ink:#2e6b45; --danger:#b23b3b;
+  --accent:#2f5d8a; --accent-ink:#ffffff; --accent-soft:#e3ecf5; --filled:#eef5ef; --filled-ink:#2e6b45; --danger:#b23b3b;
+  --work:#2f5d8a; --priv:#9a6b2f; --star:#d99a00;
   --nav:rgba(245,247,248,.92);
   --display:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
   --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
@@ -14,13 +15,16 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#12181d; --sheet:#1a2229; --ink:#e3e9ed; --muted:#93a2ad; --line:#2c3842;
-  --accent:#7fb0e0; --accent-ink:#0f1a24; --accent-soft:#223447; --filled:#1e3127; --filled-ink:#8fd0a5; --danger:#e07b7b;
+  --accent:#7fb0e0; --accent-ink:#0f1a24; --accent-soft:#223447; --filled:#1b2a22; --filled-ink:#8fd0a5; --danger:#e07b7b;
+  --work:#7fb0e0; --priv:#d4a865; --star:#f0c040;
   --nav:rgba(18,24,29,.92); color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#12181d; --sheet:#1a2229; --ink:#e3e9ed; --muted:#93a2ad; --line:#2c3842;
-  --accent:#7fb0e0; --accent-ink:#0f1a24; --accent-soft:#223447; --filled:#1e3127; --filled-ink:#8fd0a5; --danger:#e07b7b;
+  --accent:#7fb0e0; --accent-ink:#0f1a24; --accent-soft:#223447; --filled:#1b2a22; --filled-ink:#8fd0a5; --danger:#e07b7b;
+  --work:#7fb0e0; --priv:#d4a865; --star:#f0c040;
   --nav:rgba(18,24,29,.92); color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
 button,select,input,textarea{font:inherit;color:inherit}
 /* iOSは16px未満の入力欄にフォーカスすると拡大するため、入力欄はすべて16px以上にする */
@@ -35,10 +39,122 @@ button{cursor:pointer}
 .nav-title{font-family:var(--display);font-weight:800;font-size:1.1rem;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;text-align:center;min-width:0}
 .nav-l{justify-self:start}
 .nav-r{justify-self:end}
-.nav-back{display:inline-flex;align-items:center;gap:2px;border:0;background:transparent;color:var(--accent);padding:8px 8px 8px 0;font-weight:500}
+.nav-back,.nav-help{display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;color:var(--accent);padding:8px 8px 8px 0;font-weight:500;white-space:nowrap}
 .nav-back svg{width:20px;height:20px}
-.nav-help{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--accent);padding:8px 8px 8px 0;font-weight:500;white-space:nowrap}
 .wakaba{width:15px;height:18px;flex:none}
+.icon-btn{width:40px;height:40px;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);border-radius:50%;margin-right:-8px}
+.icon-btn:hover{background:var(--accent-soft)}
+.icon-btn svg{width:22px;height:22px}
+
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 120px}
+.lead{color:var(--muted);font-size:.82rem;margin:0 0 14px}
+.btn{border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:9px 14px;font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--accent);padding-inline:6px}
+.btn.danger{color:var(--danger)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* FAB */
+.fab{position:fixed;right:max(20px,calc((100vw - 560px)/2 + 20px));bottom:calc(24px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 18px rgba(20,40,60,.28);z-index:9}
+.fab svg{width:26px;height:26px}
+.fab:active{transform:scale(.96)}
+
+/* day list */
+.days{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.day{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px 14px;width:100%;text-align:left}
+.day:hover{border-color:var(--accent)}
+.date-block{text-align:center;min-width:48px}
+.date-block .d{font-family:var(--display);font-size:1.6rem;line-height:1;font-weight:800}
+.date-block .m{font-size:.72rem;color:var(--muted);letter-spacing:.08em}
+.day .info{min-width:0}
+.day .range{font-size:.8rem;color:var(--muted);line-height:1.5}
+.bar{height:5px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--filled-ink)}
+.count{font-size:.8rem;color:var(--muted);text-align:right}
+.tag{display:inline-block;font-size:.68rem;padding:0 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:middle;letter-spacing:.05em}
+.empty{text-align:center;color:var(--muted);padding:40px 0}
+
+/* panels & forms */
+.panel{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.section-label{font-size:.78rem;color:var(--muted);letter-spacing:.08em;margin:24px 0 8px}
+.section-label:first-child{margin-top:4px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted);min-width:0}
+label.f select,label.f input{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--paper);color:var(--ink);width:100%}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.note{font-size:.8rem;color:var(--muted);margin:0}
+.err{color:var(--danger);font-size:.85rem;margin:0}
+.sep{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
+
+/* day sheet */
+.meta{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.meta label.f select{padding:8px}
+.status{font-size:.8rem;color:var(--muted);margin:0 0 10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.legend{display:inline-flex;align-items:center;gap:4px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.ledger{background:var(--sheet);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.slot{--kc:var(--line);position:relative;display:grid;grid-template-columns:54px 1fr;border-top:1px solid var(--line)}
+.slot:first-child{border-top:0}
+.slot::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--kc)}
+.slot.k-work{--kc:var(--work)}
+.slot.k-private{--kc:var(--priv)}
+.slot.done{background:var(--filled)}
+.slot:focus-within{background:var(--accent-soft)}
+.slot .t{padding:10px 0 8px 14px;font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.slot.now .t::after{content:"今";order:1;display:block;padding:0 5px;border-radius:4px;background:var(--accent);color:var(--accent-ink);font-size:.68rem;font-weight:700}
+.slot.now .t .same{order:2}
+.slot .body{padding:8px 10px 8px 2px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kinds{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--sheet)}
+.seg button{border:0;background:transparent;padding:4px 10px;font-size:.78rem;color:var(--muted);line-height:1.4}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--kc);color:var(--accent-ink);font-weight:700}
+.seg.sub button.on{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.same{border:0;background:transparent;color:var(--muted);font-size:.7rem;padding:2px 0;white-space:nowrap}
+.same:hover{color:var(--accent)}
+.slot textarea.txt{border:0;background:transparent;resize:none;padding:2px 0;min-height:30px;width:100%;line-height:1.5;field-sizing:content}
+.slot textarea.txt::placeholder{color:var(--muted);opacity:.5}
+.slot textarea:focus,.slot input:focus{outline:none}
+.mtg{display:flex;flex-direction:column;gap:6px}
+.mf{display:grid;grid-template-columns:44px 1fr;align-items:start;gap:6px}
+.mf>span{font-size:.75rem;color:var(--muted);padding-top:8px}
+.mf input,.mf textarea{border:1px solid var(--line);border-radius:7px;padding:6px 9px;background:var(--sheet);color:var(--ink);width:100%;min-width:0;resize:none;field-sizing:content;min-height:36px;line-height:1.5}
+.mf input:focus,.mf textarea:focus{border-color:var(--accent)}
+.rate{display:flex;align-items:center;flex-wrap:wrap}
+.star{border:0;background:transparent;font-size:1.35rem;line-height:1;padding:4px 3px;color:var(--line)}
+.star.on{color:var(--star)}
+.rate-txt{font-size:.8rem;color:var(--muted);margin-left:6px}
+.rate-scale{font-size:.68rem;color:var(--muted);grid-column:2;margin-top:-6px}
+.endline{display:flex;justify-content:space-between;padding:10px 12px;font-size:.85rem;color:var(--muted);background:var(--paper);border-top:1px dashed var(--line)}
+.day-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.day-actions .full{grid-column:1/-1}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--danger);justify-content:center}
+
+/* shortcuts */
+.scrow{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.chip{border:1px solid var(--line);background:var(--sheet);border-radius:16px;padding:5px 12px;font-size:.85rem;line-height:1.4;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip:hover{border-color:var(--accent)}
+.chip.edit{color:var(--accent);border-style:dashed}
+.scrow .note{align-self:center;white-space:nowrap}
+.sc-add,.sc-edit{display:flex;gap:8px}
+.sc-add input,.sc-edit input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--paper);color:var(--ink)}
+.sc-edit{width:100%;flex-wrap:wrap}
+.sc-box{background:var(--sheet);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sc-head{padding:16px;display:flex;flex-direction:column;gap:12px}
+.sc-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.sc-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 6px 16px;border-top:1px solid var(--line);flex-wrap:wrap;min-height:48px}
+.sc-item:first-child{border-top:0}
+.sc-text{min-width:0;flex:1;overflow-wrap:anywhere}
+.sc-ops{display:flex;gap:2px}
+.sc-empty{margin:0;padding:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;text-align:center}
+
+/* export / import */
+textarea.copybox{width:100%;min-height:260px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--paper);font-family:var(--mono);font-size:13px!important;line-height:1.5;color:var(--ink)}
+.export-actions{display:flex;gap:10px;flex-wrap:wrap}
+.export-actions .btn{flex:1}
+.file-btn{text-align:center;display:block}
+.import-confirm{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:8px;background:var(--accent-soft)}
+.import-confirm b{color:var(--ink)}
 
 /* manual */
 .man{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
@@ -58,99 +174,13 @@ button{cursor:pointer}
 .caution{background:var(--accent-soft);border-color:transparent}
 .caution ul{margin-bottom:12px}
 .man p.tight{margin:8px 0 0;font-size:.9rem}
-.sep{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
-.file-btn{text-align:center;display:block}
-.import-confirm{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:8px;background:var(--accent-soft)}
-.import-confirm b{color:var(--ink)}
 .k-fab{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:.85rem;font-weight:700;vertical-align:-4px}
 .k-icon{display:inline-grid;place-items:center;vertical-align:-4px}
 .k-icon svg{width:18px;height:18px}
-.icon-btn{width:40px;height:40px;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);border-radius:50%;margin-right:-8px}
-.icon-btn:hover{background:var(--accent-soft)}
-.icon-btn svg{width:22px;height:22px}
-
-.wrap{max-width:560px;margin:0 auto;padding:16px 16px 120px}
-.lead{color:var(--muted);font-size:.82rem;margin:0 0 14px}
-.btn{border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:9px 14px;font-weight:500}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
-.btn.ghost{background:transparent;border-color:transparent;color:var(--accent);padding-inline:6px}
-.btn.danger{color:var(--danger)}
-.btn.block{width:100%}
-
-/* FAB */
-.fab{position:fixed;right:max(20px,calc((100vw - 560px)/2 + 20px));bottom:calc(24px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 18px rgba(20,40,60,.28);z-index:9}
-.fab svg{width:26px;height:26px}
-.fab:active{transform:scale(.96)}
-
-/* day list */
-.days{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.day{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px 14px;width:100%;text-align:left}
-.day:hover{border-color:var(--accent)}
-.date-block{text-align:center;min-width:48px}
-.date-block .d{font-family:var(--display);font-size:1.6rem;line-height:1;font-weight:800}
-.date-block .m{font-size:.72rem;color:var(--muted);letter-spacing:.08em}
-.day .info{min-width:0}
-.day .range{font-size:.85rem;color:var(--muted)}
-.bar{height:5px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--filled-ink)}
-.count{font-size:.8rem;color:var(--muted);text-align:right}
-.tag{display:inline-block;font-size:.68rem;padding:0 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:middle;letter-spacing:.05em}
-.empty{text-align:center;color:var(--muted);padding:40px 0}
-
-/* panels & forms */
-.panel{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
-.section-label{font-size:.78rem;color:var(--muted);letter-spacing:.08em;margin:24px 0 8px}
-.section-label:first-child{margin-top:4px}
-label.f{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
-label.f select,label.f input{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--paper);color:var(--ink);width:100%}
-.note{font-size:.8rem;color:var(--muted);margin:0}
-.err{color:var(--danger);font-size:.85rem;margin:0}
-
-/* day sheet */
-.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.meta label.f{min-width:0}
-.meta label.f select{padding:8px}
-.status{font-size:.8rem;color:var(--muted);margin:0 0 10px}
-.ledger{background:var(--sheet);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.slot{display:grid;grid-template-columns:58px 1fr auto;align-items:start;border-top:1px solid var(--line)}
-.slot:first-child{border-top:0}
-.slot .t{padding:11px 0 0 12px;font-size:.85rem;color:var(--muted)}
-.slot textarea{border:0;background:transparent;resize:none;padding:10px 8px;min-height:44px;width:100%;line-height:1.5;field-sizing:content}
-.slot textarea::placeholder{color:var(--line)}
-.slot textarea:focus,.slot textarea:focus-visible{outline:none}
-.slot.done{background:var(--filled)}
-.slot.now{box-shadow:inset 3px 0 0 var(--accent)}
-.slot:focus-within{background:var(--accent-soft)}
-.slot .same{border:0;background:transparent;color:var(--muted);font-size:.72rem;padding:12px 10px 0;white-space:nowrap}
-.slot .same:hover{color:var(--accent)}
-.endline{display:flex;justify-content:space-between;padding:10px 12px;font-size:.85rem;color:var(--muted);background:var(--paper);border-top:1px dashed var(--line)}
-.day-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.day-actions .full{grid-column:1/-1}
-.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--danger);justify-content:center}
-
-/* shortcuts */
-.scrow{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding:2px 12px 12px 66px;min-width:0}
-.chip{border:1px solid var(--line);background:var(--sheet);border-radius:16px;padding:5px 12px;font-size:.85rem;line-height:1.4;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.chip:hover{border-color:var(--accent)}
-.chip.edit{color:var(--accent);border-style:dashed}
-.scrow .note{align-self:center;white-space:nowrap}
-.sc-add,.sc-edit{display:flex;gap:8px}
-.sc-add input,.sc-edit input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--paper);color:var(--ink)}
-.sc-edit{width:100%;flex-wrap:wrap}
-.sc-box{background:var(--sheet);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.sc-head{padding:16px;display:flex;flex-direction:column;gap:12px}
-.sc-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.sc-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 6px 16px;border-top:1px solid var(--line);flex-wrap:wrap;min-height:48px}
-.sc-item:first-child{border-top:0}
-.sc-empty{margin:0;padding:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;text-align:center}
-.sc-text{min-width:0;flex:1;overflow-wrap:anywhere}
-.sc-ops{display:flex;gap:2px}
-
-/* export */
-textarea.copybox{width:100%;min-height:260px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--paper);font-family:var(--mono);font-size:13px!important;line-height:1.5;color:var(--ink)}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.export-actions{display:flex;gap:10px;flex-wrap:wrap}
-.export-actions .btn{flex:1}
+.k-tag{display:inline-block;padding:0 6px;border-radius:4px;font-size:.8rem;font-weight:700;color:var(--accent-ink)}
+.k-tag.w{background:var(--work)}
+.k-tag.p{background:var(--priv)}
+.k-star{color:var(--star)}
 
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:20px;font-size:.85rem;z-index:20;white-space:nowrap}
 @media (prefers-reduced-motion:no-preference){.day,.btn,.fab{transition:border-color .15s,transform .1s}}
@@ -160,86 +190,145 @@ textarea.copybox{width:100%;min-height:260px;border:1px solid var(--line);border
 <main class="wrap" id="app"></main>
 <button class="fab" id="fab" data-act="new" aria-label="新しい日を作成" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <div class="toast" id="toast" hidden></div>
+
 <script>
 const KEY='kenshu-daily-log-v1';
 const WD=['日','月','火','水','木','金','土'];
+const DAY=1440;
+const RATE=['','不毛','いまいち','ふつう','有意義','意義あり'];
 const ICON_GEAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 const ICON_BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
 const ICON_WAKABA='<svg class="wakaba" viewBox="0 0 20 24" aria-hidden="true"><path d="M10 7 L2 2 V17 L10 22 Z" fill="#f3c512" stroke="#2f7a3a" stroke-width="1.2" stroke-linejoin="round"/><path d="M10 7 L18 2 V17 L10 22 Z" fill="#2f9a46" stroke="#2f7a3a" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+const LISTS={
+  shortcuts:{title:'記録のショートカット',ph:'例：電話応対ロールプレイ',note:'記録欄をタップすると、ここに登録した言葉が候補として並びます。'},
+  mtgShortcuts:{title:'会議名のショートカット',ph:'例：週次定例',note:'会議を選んだ枠の「会議名」をタップすると、ここに登録した会議名が候補として並びます。'}
+};
 let state={days:{}}, view={name:'list'}, downloads=null;
 
-/* time helpers: m = minutes after the day start (0..1440). Day start = state.dayStart (minutes, default 6:00) */
-const DAY=1440;
+/* ---------- 時刻：m = その日の0:00からの分（1440以上は翌日） ---------- */
 const pad=n=>String(n).padStart(2,'0');
-function S(){return typeof state.dayStart==='number'?state.dayStart:360}
 function hm(min){return Math.floor(min/60)%24+':'+pad(min%60)}
-function startLabel(){return '午前'+hm(S())}
-function tl(m){const a=S()+m;return (a>=DAY?'翌':'')+hm(a%DAY)}
+function tl(m){return (m>=DAY?'翌':'')+hm(m)}
 function opts(from,to,sel){let s='';for(let m=from;m<=to;m+=30)s+=`<option value="${m}"${m===sel?' selected':''}>${tl(m)}</option>`;return s}
-function logicalToday(){const d=new Date();d.setMinutes(d.getMinutes()-S());return iso(d)}
 function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
 function parse(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
-function nowMin(){const d=new Date();return ((d.getHours()*60+d.getMinutes()-S())%DAY+DAY)%DAY}
-function endOf(day){return day.sleep==null?DAY:day.sleep}
-function slotsOf(day){const r=[];for(let m=day.wake;m<endOf(day);m+=30)r.push(m);return r}
-/* 日付キー＋起点からの分 → "YYYY-MM-DDTHH:MM"（翌日にまたがる時刻は翌日の日付になる） */
-function stamp(k,m){const d=parse(k);d.setMinutes(S()+m);return iso(d)+'T'+pad(d.getHours())+':'+pad(d.getMinutes())}
-
-/* 1日の始まりを変えたとき、記録を新しい区切りに合わせて組み替える。
-   各枠の実際の日時と内容はそのまま。起床・就寝は新しい区切りの中に収まるよう調整する */
+function today(){return iso(new Date())}
 function dnum(k){const[y,m,d]=k.split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/86400000)}
-function dkey(n){const d=new Date(n*86400000);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())}
-function rebase(days,oldS,newS){
-  const abs=(k,m)=>dnum(k)*DAY+oldS+m;
-  const place=a=>{const n=Math.floor((a-newS)/DAY);return [n,a-n*DAY-newS]};
-  const w={};const get=n=>w[n]||(w[n]={wakes:[],ends:[],open:false,log:{},has:false,sample:null});
-  const mark=(g,smp)=>{g.sample=g.sample===false?false:!!smp};
-  for(const k of Object.keys(days)){const day=days[k];
-    const [wn,wm]=place(abs(k,day.wake));const g=get(wn);g.wakes.push(wm);g.has=true;mark(g,day.sample);
-    for(const m of Object.keys(day.log||{})){const v=day.log[m];if(!(v||'').trim())continue;
-      const [n,nm]=place(abs(k,+m));const h=get(n);h.log[nm]=v;h.has=true;mark(h,day.sample)}
-    const [en,em]=place(abs(k,day.sleep==null?DAY:day.sleep)-1);
-    if(day.sleep==null){for(let n=wn;n<=en;n++)get(n).open=true}
-    else{for(let n=wn;n<en;n++)get(n).ends.push(DAY);get(en).ends.push(em+1)}
-  }
-  const out={};
-  for(const n of Object.keys(w)){const g=w[n];if(!g.has)continue;
-    const recs=Object.keys(g.log).map(Number);
-    const wake=Math.min(...g.wakes,...recs);
-    let sleep=null;
-    if(!g.open){sleep=Math.max(...g.ends,...recs.map(m=>m+30),wake+30);if(sleep>DAY)sleep=DAY}
-    const d={wake,sleep,log:g.log};if(g.sample)d.sample=true;out[dkey(+n)]=d}
-  return out;
-}
+function endOf(day){return day.sleep==null?day.wake+DAY:day.sleep}
+function slotsOf(day){const r=[];for(let m=day.wake;m<endOf(day);m+=30)r.push(m);return r}
+function stamp(k,m){const d=parse(k);d.setMinutes(m);return iso(d)+'T'+pad(d.getHours())+':'+pad(d.getMinutes())}
+function nowSlot(k){return Math.floor((Date.now()-parse(k).getTime())/60000/30)*30}
+function workLabel(day){return day.workStart!=null&&day.workEnd!=null?`${tl(day.workStart)}〜${tl(day.workEnd)}`:'未設定'}
 
-function load(){try{const s=localStorage.getItem(KEY);if(s){state=JSON.parse(s);return}}catch(e){}
-  // サンプルデータ（初回のみ）
-  const d=new Date();d.setMinutes(d.getMinutes()-360);d.setDate(d.getDate()-1);
-  const k=iso(d);
-  state={dayStart:360,days:{[k]:{wake:60,sleep:1020,sample:true,log:{
-    60:'起床・身支度',90:'朝食',120:'通勤',150:'通勤',180:'朝礼・本日の目標確認',210:'ビジネスマナー研修',240:'ビジネスマナー研修',270:'電話応対ロールプレイ',
-    300:'電話応対ロールプレイ',330:'昼休憩',360:'昼休憩',390:'社内システム説明',420:'社内システム説明',450:'グループワーク（課題整理）',480:'グループワーク（発表準備）',
-    510:'グループ発表',540:'振り返り・日報作成',570:'帰宅',600:'帰宅',630:'夕食',660:'夕食',690:'研修資料の復習',720:'研修資料の復習',750:'入浴',780:'自由時間',810:'自由時間',840:'自由時間',870:'翌日の準備',900:'自由時間',930:'自由時間',960:'自由時間',990:'就寝準備'}}}};
+/* ---------- 1枠の記録 ---------- */
+function rec(day,m){const r=day.log[m];return r&&typeof r==='object'?r:{}}
+function inWork(day,m){return day.workStart!=null&&day.workEnd!=null&&m>=day.workStart&&m<day.workEnd}
+function kindOf(day,m){return rec(day,m).kind||(inWork(day,m)?'work':'private')}
+function typeOf(day,m){return kindOf(day,m)==='work'?(rec(day,m).type||'task'):null}
+function isMtg(day,m){return typeOf(day,m)==='meeting'}
+function filled(day,m){const r=rec(day,m);
+  if(isMtg(day,m)){const g=r.mtg||{};return !!((g.name||'').trim()||g.rating||(g.purpose||'').trim()||(g.note||'').trim())}
+  return !!(r.text||'').trim()}
+function prune(r){if(typeof r.text==='string'&&!r.text.trim())delete r.text;
+  if(r.mtg){const g=r.mtg;for(const k of ['name','purpose','note'])if(!(g[k]||'').trim())delete g[k];if(!g.rating)delete g.rating;if(!Object.keys(g).length)delete r.mtg}
+  return r}
+function upd(day,m,fn){const r=JSON.parse(JSON.stringify(rec(day,m)));fn(r);prune(r);
+  if(Object.keys(r).length)day.log[m]=r;else delete day.log[m];if(day.sample)delete day.sample;save()}
+function countOf(day){const sl=slotsOf(day);return [sl.filter(m=>filled(day,m)).length,sl.length]}
+
+/* ---------- 保存と読み込み ---------- */
+function sample(){
+  const d=new Date();d.setDate(d.getDate()-1);const k=iso(d);
+  const T=t=>({text:t});
+  const log={420:T('起床・身支度'),450:T('朝食'),480:T('通勤'),510:T('通勤'),
+    540:{type:'meeting',mtg:{name:'朝礼',rating:3,purpose:'本日の目標確認',note:'目標を声に出すと1日の流れがつかめた'}},
+    570:T('ビジネスマナー研修'),600:T('ビジネスマナー研修'),630:T('電話応対ロールプレイ'),660:T('電話応対ロールプレイ'),
+    690:{kind:'private',text:'昼休憩'},720:{kind:'private',text:'昼休憩'},750:T('社内システム説明'),780:T('社内システム説明'),
+    810:T('グループワーク（課題整理）'),840:T('グループワーク（発表準備）'),
+    870:{type:'meeting',mtg:{name:'グループ発表',rating:5,purpose:'課題の解決案を共有する',note:'他班の視点が参考になった。質疑で説明不足に気づいた'}},
+    900:T('振り返り・日報作成'),930:T('帰宅'),960:T('帰宅'),990:T('夕食'),1020:T('夕食'),1050:T('研修資料の復習'),1080:T('研修資料の復習'),
+    1110:T('入浴'),1140:T('自由時間'),1170:T('自由時間'),1200:T('自由時間'),1230:T('翌日の準備'),1260:T('自由時間'),1290:T('自由時間'),1320:T('自由時間'),1350:T('就寝準備')};
+  return {ver:2,days:{[k]:{wake:420,sleep:1380,workStart:540,workEnd:930,sample:true,log}}};
 }
-function ensure(){if(!state.days)state.days={};if(typeof state.dayStart!=='number')state.dayStart=360;
-  /* 1日の区切りは午前6:00固定。以前の版で区切りを変えていた場合は6:00に戻して記録を移し替える */
-  if(state.dayStart!==360){state.days=rebase(state.days,state.dayStart,360);state.dayStart=360;save()}if(!Array.isArray(state.shortcuts))state.shortcuts=['通勤','朝礼・本日の目標確認','昼休憩','日報作成']}
+/* 旧形式（6:00起点の分・文字列の記録）を新形式（0:00起点・オブジェクト）に移す */
+function migrate(){
+  if(state.ver===2)return;
+  const S0=typeof state.dayStart==='number'?state.dayStart:360;const out={};
+  for(const k of Object.keys(state.days||{})){const o=state.days[k],log={};
+    for(const m of Object.keys(o.log||{})){const v=o.log[m];const t=typeof v==='string'?v:(v&&v.text)||'';if(t.trim())log[+m+S0]={text:t}}
+    let wake=o.wake+S0,sleep=o.sleep==null?null:o.sleep+S0;
+    if(wake>1410)wake=1410;if(sleep!=null&&sleep>wake+DAY)sleep=wake+DAY;
+    out[k]={wake,sleep,workStart:null,workEnd:null,log};if(o.sample)out[k].sample=true}
+  state.days=out;delete state.dayStart;state.ver=2;save();
+}
+function load(){try{const s=localStorage.getItem(KEY);if(s){state=JSON.parse(s);return}}catch(e){}state=sample()}
+function ensure(){if(!state.days)state.days={};migrate();
+  if(!Array.isArray(state.shortcuts))state.shortcuts=['通勤','ビジネスマナー研修','昼休憩','日報作成'];
+  if(!Array.isArray(state.mtgShortcuts))state.mtgShortcuts=['朝礼','週次定例','1on1','研修振り返り']}
 function cleanText(v){return String(v).replace(/[\r\n]+/g,' ').trim()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,1800)}
 function fmtDate(k){const d=parse(k);return `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）`}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
-/* ---------- JSON ---------- */
+/* ---------- JSON書き出し ---------- */
 function dayJson(k){
-  const day=state.days[k],slots=[];
-  for(let m=0;m<1440;m+=30){const v=(day.log[m]||'').trim();slots.push({start:stamp(k,m),end:stamp(k,m+30),content:v||null})}
-  return {date:k,wake:stamp(k,day.wake),sleep:day.sleep==null?null:stamp(k,day.sleep),slots};
+  const day=state.days[k],slots=[],end=Math.max(DAY,endOf(day));
+  for(let m=0;m<end;m+=30){const awake=m>=day.wake&&m<endOf(day),r=rec(day,m),mt=awake&&isMtg(day,m),g=r.mtg||{};
+    slots.push({start:stamp(k,m),end:stamp(k,m+30),
+      category:awake?kindOf(day,m):null,
+      workType:awake?typeOf(day,m):null,
+      content:!mt&&(r.text||'').trim()?r.text.trim():null,
+      meeting:mt?{name:(g.name||'').trim()||null,rating:g.rating||null,purpose:(g.purpose||'').trim()||null,impression:(g.note||'').trim()||null}:null})}
+  return {date:k,wake:stamp(k,day.wake),sleep:day.sleep==null?null:stamp(k,day.sleep),
+    workStart:day.workStart==null?null:stamp(k,day.workStart),workEnd:day.workEnd==null?null:stamp(k,day.workEnd),slots};
 }
 function buildJson(key){
   const keys=key?[key]:Object.keys(state.days).sort();
-  return JSON.stringify({exportedAt:new Date().toISOString(),dayStart:pad(Math.floor(S()/60))+':'+pad(S()%60),slotMinutes:30,days:keys.map(dayJson)},null,2);
+  return JSON.stringify({version:2,exportedAt:new Date().toISOString(),slotMinutes:30,days:keys.map(dayJson)},null,2);
 }
+
+/* ---------- JSON読み込み（新旧どちらの書き出し形式にも対応） ---------- */
+function stampAbs(s){const m=/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/.exec(String(s));if(!m)return null;return dnum(m[1])*DAY+(+m[2])*60+(+m[3])}
+function parseImport(text){
+  let obj;try{obj=JSON.parse(text)}catch(e){throw new Error('JSONとして読み取れませんでした。ファイルが壊れていないか確認してください')}
+  if(!obj||!Array.isArray(obj.days))throw new Error('このツールで書き出したJSONではないようです（days の項目がありません）');
+  const days={};
+  obj.days.forEach((d,i)=>{
+    const where=`${i+1}日目（${d&&d.date||'日付なし'}）`;
+    if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d.date))throw new Error(where+'の日付が読み取れません');
+    const base=dnum(d.date)*DAY;
+    const off=s=>{const a=stampAbs(s);if(a==null)return null;const o=a-base;return (o>=0&&o<=2*DAY&&o%30===0)?o:null};
+    let wake=off(d.wake);if(wake==null)throw new Error(where+'の起床時間が読み取れません');if(wake>1410)wake=1410;
+    let sleep=null;if(d.sleep!=null){sleep=off(d.sleep);if(sleep==null||sleep<=wake)throw new Error(where+'の就寝時間が読み取れません');if(sleep>wake+DAY)sleep=wake+DAY}
+    let ws=d.workStart!=null?off(d.workStart):null,we=d.workEnd!=null?off(d.workEnd):null;if(ws==null||we==null||we<=ws){ws=null;we=null}
+    const day={wake,sleep,workStart:ws,workEnd:we,log:{}};
+    (Array.isArray(d.slots)?d.slots:[]).forEach(s=>{if(!s)return;
+      const o=off(s.start);if(o==null||o>=2*DAY)throw new Error(where+'に読み取れない時刻の記録があります');
+      const r={};
+      if(typeof s.content==='string'&&s.content.trim())r.text=s.content;
+      if(s.meeting&&typeof s.meeting==='object'){const g=s.meeting,n=+g.rating;
+        r.type='meeting';r.mtg={name:typeof g.name==='string'?g.name:'',purpose:typeof g.purpose==='string'?g.purpose:'',note:typeof g.impression==='string'?g.impression:'',rating:n>=1&&n<=5?Math.round(n):null}}
+      const def=inWork(day,o)?'work':'private';
+      if((s.category==='work'||s.category==='private')&&s.category!==def)r.kind=s.category;
+      if(r.type==='meeting'&&(r.kind||def)!=='work')r.kind='work';
+      prune(r);if(r.type&&!r.mtg&&!r.text&&!r.kind&&def!=='work')delete r.type;
+      if(Object.keys(r).length)day.log[o]=r});
+    days[d.date]=day;
+  });
+  if(!Object.keys(days).length)throw new Error('ファイルに日の記録が入っていません');
+  return days;
+}
+function importAreaHtml(){
+  const p=view.importPending;
+  if(view.importErr)return `<p class="err">${esc(view.importErr)}</p>`;
+  if(!p)return '';
+  const keys=Object.keys(p).sort(),dup=keys.filter(k=>state.days[k]);
+  return `<div class="import-confirm">
+    <p class="note"><b>${fmtDate(keys[0])}〜${fmtDate(keys[keys.length-1])}</b> の ${keys.length}日分を読み込みます。${dup.length?`<br>このうち ${dup.length}日分は同じ日付の記録がすでにあり、ファイルの内容で置き換えます。`:''}</p>
+    <div class="export-actions"><button class="btn primary" data-act="importyes">読み込む</button><button class="btn" data-act="importno">やめる</button></div></div>`;
+}
+function refreshImport(){const el=document.getElementById('importArea');if(el)el.innerHTML=importAreaHtml()}
 
 /* ---------- nav ---------- */
 function navHtml(){
@@ -266,47 +355,77 @@ function render(){
   else if(view.name==='settings')app.innerHTML=settingsView();
   else if(view.name==='manual')app.innerHTML=manualView();
   if(view.keepScroll==null)window.scrollTo(0,0);else{window.scrollTo(0,view.keepScroll);view.keepScroll=null}
-  if(view.name==='settings'){const f=document.getElementById(view.editIdx!=null?'scEdit':(view.focusAdd?'scNew':''));if(f){f.focus();view.focusAdd=false}}
+  if(view.name==='settings'){const f=view.edit?document.getElementById('scEdit'):(view.focusAdd?document.getElementById('new-'+view.focusAdd):null);if(f){f.focus();view.focusAdd=null}}
 }
 
 function listView(){
   const keys=Object.keys(state.days).sort().reverse();
-  const items=keys.map(k=>{const day=state.days[k],sl=slotsOf(day),n=sl.filter(m=>(day.log[m]||'').trim()).length,d=parse(k);
+  const items=keys.map(k=>{const day=state.days[k],[n,tot]=countOf(day),d=parse(k);
     return `<li><button class="day" data-open="${k}">
       <div class="date-block"><div class="m">${d.getMonth()+1}月 ${WD[d.getDay()]}</div><div class="d">${d.getDate()}</div></div>
       <div class="info"><div>${fmtDate(k)}${day.sample?'<span class="tag">サンプル</span>':''}</div>
-        <div class="range mono">起床 ${tl(day.wake)} → 就寝 ${day.sleep==null?'未設定':tl(day.sleep)}</div>
-        <div class="bar"><i style="width:${sl.length?Math.round(n/sl.length*100):0}%"></i></div></div>
-      <div class="count mono">${n}/${sl.length}</div></button></li>`}).join('');
-  return `<p class="lead">1日は${startLabel()}から翌${startLabel()}まで。30分単位で記録します。</p>
+        <div class="range mono">起床 ${tl(day.wake)} → 就寝 ${day.sleep==null?'未設定':tl(day.sleep)}<br>業務 ${workLabel(day)}</div>
+        <div class="bar"><i style="width:${tot?Math.round(n/tot*100):0}%"></i></div></div>
+      <div class="count mono">${n}/${tot}</div></button></li>`}).join('');
+  return `<p class="lead">起床から就寝までを、30分単位で記録します。</p>
     ${keys.length?`<ul class="days">${items}</ul>`:`<p class="empty">まだ記録がありません。<br>右下の「＋」から起床時間を設定して始めましょう。</p>`}`;
 }
 
 function newView(){
   return `<form class="panel" id="newForm">
-      <label class="f">日付<input type="date" id="nDate" value="${logicalToday()}" required></label>
-      <label class="f">起床時間<select id="nWake">${opts(0,1410,((420-S())%DAY+DAY)%DAY)}</select></label>
-      <p class="note">${S()===0?'':`午前0:00〜${hm(S())}は前日の「翌」として扱います。`}就寝時間は記録画面であとから設定できます。</p>
+      <label class="f">日付<input type="date" id="nDate" value="${today()}" required></label>
+      <label class="f">起床時間<select id="nWake">${opts(0,1410,420)}</select></label>
+      <div class="pair">
+        <label class="f">業務開始<select id="nWS"><option value="">未設定</option>${opts(0,2850,540)}</select></label>
+        <label class="f">業務終了<select id="nWE"><option value="">未設定</option>${opts(30,2880,1080)}</select></label>
+      </div>
+      <p class="note">業務時間の枠は、最初から「仕事」になります。就寝時間と業務時間は記録画面であとから変えられます。</p>
       <p class="err" id="nErr" hidden></p>
       <button class="btn primary block" type="submit">作成して記録を始める</button>
     </form>`;
 }
 
+function slotHtml(k,m){
+  const day=state.days[k],r=rec(day,m),kind=kindOf(day,m),type=typeOf(day,m),mt=type==='meeting',g=r.mtg||{};
+  const now=nowSlot(k)===m;
+  const seg=(attr,val,label,on)=>`<button type="button" ${attr}="${val}" data-m="${m}" class="${on?'on':''}" aria-pressed="${on}">${label}</button>`;
+  let body=`<div class="kinds">
+      <div class="seg" role="group" aria-label="区分">${seg('data-kind','work','仕事',kind==='work')}${seg('data-kind','private','プライベート',kind==='private')}</div>
+      ${kind==='work'?`<div class="seg sub" role="group" aria-label="仕事の種類">${seg('data-type','meeting','会議',type==='meeting')}${seg('data-type','task','作業',type==='task')}</div>`:''}
+    </div>`;
+  if(mt){const rt=g.rating||0;
+    body+=`<div class="mtg">
+      <label class="mf"><span>会議名</span><input type="text" id="f-${m}-name" data-m="${m}" data-field="name" data-sc="mtgShortcuts" value="${esc(g.name||'')}" placeholder="会議名" enterkeyhint="done"></label>
+      <div class="mf"><span>評価</span><div><div class="rate" role="group" aria-label="会議評価">${[1,2,3,4,5].map(n=>`<button type="button" class="star${n<=rt?' on':''}" data-star="${n}" data-m="${m}" aria-label="${n}（${RATE[n]}）">★</button>`).join('')}<span class="rate-txt">${rt?RATE[rt]:'未評価'}</span></div></div></div>
+      <div class="mf"><span></span><span class="rate-scale">★1 不毛 〜 ★5 意義あり</span></div>
+      <label class="mf"><span>目的</span><textarea id="f-${m}-purpose" data-m="${m}" data-field="purpose" rows="1" placeholder="何のための会議か">${esc(g.purpose||'')}</textarea></label>
+      <label class="mf"><span>所感</span><textarea id="f-${m}-note" data-m="${m}" data-field="note" rows="1" placeholder="感じたこと・学んだこと">${esc(g.note||'')}</textarea></label>
+    </div>`;
+  }else{
+    body+=`<textarea class="txt" id="f-${m}-text" data-m="${m}" data-field="text" data-sc="shortcuts" rows="1" placeholder="何をしていましたか">${esc(r.text||'')}</textarea>`;
+  }
+  return `<div class="slot k-${kind}${filled(day,m)?' done':''}${now?' now':''}" id="slot-${m}">
+    <div class="t"><span class="mono">${tl(m)}</span>${m>day.wake?`<button type="button" class="same" data-same="${m}" title="直前の枠と同じ内容を入れます">↑同じ</button>`:''}</div><div class="body">${body}</div></div>`;
+}
+function refreshSlot(m){const el=document.getElementById('slot-'+m);if(el)el.outerHTML=slotHtml(view.key,m);refreshCount()}
+function refreshCount(){const c=document.getElementById('dCount');if(c){const [n,t]=countOf(state.days[view.key]);c.textContent=n+'/'+t}}
+
 function dayView(k){
-  const day=state.days[k];const isToday=k===logicalToday();const nm=isToday?Math.floor(nowMin()/30)*30:-1;
-  const sl=slotsOf(day),n=sl.filter(m=>(day.log[m]||'').trim()).length;
-  const rows=sl.map((m,i)=>{const v=day.log[m]||'';
-    return `<div class="slot${v.trim()?' done':''}${m===nm?' now':''}">
-      <div class="t mono">${tl(m)}</div>
-      <textarea id="s-${m}" data-slot="${m}" rows="1" placeholder="何をしていましたか">${esc(v)}</textarea>
-      ${i>0?`<button class="same" data-same="${m}" title="直前の枠と同じ内容を入れます">↑同じ</button>`:'<span></span>'}
-    </div>`}).join('');
+  const day=state.days[k],[n,tot]=countOf(day),isToday=k===today();
+  const rows=slotsOf(day).map(m=>slotHtml(k,m)).join('');
   return `<div class="meta">
-      <label class="f">起床時間<select id="dWake">${opts(0,endOf(day)-30,day.wake)}</select></label>
-      <label class="f">就寝時間<select id="dSleep"><option value="">未設定（翌${hm(S())}まで）</option>${opts(day.wake+30,1440,day.sleep)}</select></label>
+      <div class="pair">
+        <label class="f">起床時間<select id="dWake">${opts(0,1410,day.wake)}</select></label>
+        <label class="f">就寝時間<select id="dSleep"><option value="">未設定（${tl(day.wake+DAY)}まで）</option>${opts(day.wake+30,day.wake+DAY,day.sleep)}</select></label>
+      </div>
+      <div class="pair">
+        <label class="f">業務開始<select id="dWS"><option value="">未設定</option>${opts(0,day.wake+DAY-30,day.workStart)}</select></label>
+        <label class="f">業務終了<select id="dWE"><option value="">未設定</option>${opts(day.workStart!=null?day.workStart+30:30,day.wake+DAY,day.workEnd)}</select></label>
+      </div>
     </div>
-    <p class="status">${day.sample?'サンプルの記録です・':(isToday?'今日の記録・':'')}<span class="mono" id="dCount">${n}/${sl.length}</span> 枠を記入済み</p>
-    <div class="ledger">${rows}<div class="endline"><span class="mono">${tl(endOf(day))}</span><span>${day.sleep==null?'1日の終わり':'就寝'}</span></div></div>
+    <p class="status"><span>${day.sample?'サンプル・':(isToday?'今日・':'')}<span class="mono" id="dCount">${n}/${tot}</span> 枠を記入済み</span>
+      <span class="legend"><i style="background:var(--work)"></i>仕事</span><span class="legend"><i style="background:var(--priv)"></i>プライベート</span></p>
+    <div class="ledger">${rows}<div class="endline"><span class="mono">${tl(endOf(day))}</span><span>${day.sleep==null?'1日の終わり（就寝時間未設定）':'就寝'}</span></div></div>
     <div class="day-actions">
       <button class="btn" data-act="text">テキストで書き出す</button>
       <button class="btn" data-act="json">JSONで書き出す</button>
@@ -314,32 +433,38 @@ function dayView(k){
     </div>`;
 }
 
-function settingsView(){
-  const items=state.shortcuts.map((s,i)=>{
-    if(view.editIdx===i)return `<li class="sc-item"><form class="sc-edit" id="scEditForm" data-idx="${i}">
-      <input id="scEdit" type="text" value="${esc(s)}" maxlength="60" enterkeyhint="done" aria-label="ショートカットの変更">
+function listEditor(list){
+  const cfg=LISTS[list],arr=state[list];
+  const items=arr.map((s,i)=>{
+    if(view.edit&&view.edit.list===list&&view.edit.idx===i)return `<li class="sc-item"><form class="sc-edit" id="scEditForm" data-list="${list}" data-idx="${i}">
+      <input id="scEdit" type="text" value="${esc(s)}" maxlength="60" enterkeyhint="done" aria-label="変更後の文字">
       <button class="btn primary" type="submit">保存</button><button class="btn" type="button" data-act="sccancel">やめる</button></form></li>`;
-    if(view.delIdx===i)return `<li class="sc-item"><span class="sc-text">${esc(s)}</span>
-      <span class="confirm">削除しますか？<button class="btn danger" data-act="scdelyes" data-idx="${i}">削除する</button><button class="btn" data-act="sccancel">やめる</button></span></li>`;
+    if(view.del&&view.del.list===list&&view.del.idx===i)return `<li class="sc-item"><span class="sc-text">${esc(s)}</span>
+      <span class="confirm">削除しますか？<button class="btn danger" data-act="scdelyes" data-list="${list}" data-idx="${i}">削除する</button><button class="btn" data-act="sccancel">やめる</button></span></li>`;
     return `<li class="sc-item"><span class="sc-text">${esc(s)}</span>
-      <span class="sc-ops"><button class="btn ghost" data-act="scedit" data-idx="${i}">変更</button><button class="btn ghost danger" data-act="scdel" data-idx="${i}">削除</button></span></li>`}).join('');
-  const dayCount=Object.keys(state.days).length;
-  return `<p class="section-label">ショートカット（${state.shortcuts.length}件）</p>
+      <span class="sc-ops"><button class="btn ghost" data-act="scedit" data-list="${list}" data-idx="${i}">変更</button><button class="btn ghost danger" data-act="scdel" data-list="${list}" data-idx="${i}">削除</button></span></li>`}).join('');
+  const err=view.err&&view.err.list===list?view.err.msg:'';
+  return `<p class="section-label">${cfg.title}（${arr.length}件）</p>
     <div class="sc-box">
       <div class="sc-head">
-        <form class="sc-add" id="scAddForm">
-          <input id="scNew" type="text" maxlength="60" placeholder="例：電話応対ロールプレイ" enterkeyhint="done" aria-label="新しいショートカット">
+        <form class="sc-add" data-list="${list}">
+          <input id="new-${list}" type="text" maxlength="60" placeholder="${esc(cfg.ph)}" enterkeyhint="done" aria-label="${cfg.title}を追加">
           <button class="btn primary" type="submit">追加</button>
         </form>
-        <p class="err" id="scErr"${view.err?'':' hidden'}>${esc(view.err||'')}</p>
-        <p class="note">記録画面で入力欄をタップすると、ここに登録した文字が候補として並びます。候補をタップすると、その文字が入力欄に入ります。</p>
+        <p class="err" id="err-${list}"${err?'':' hidden'}>${esc(err)}</p>
+        <p class="note">${cfg.note}</p>
       </div>
-      ${state.shortcuts.length?`<ul class="sc-list">${items}</ul>`:`<p class="sc-empty">まだ登録がありません。上の欄から追加してください。</p>`}
-    </div>
+      ${arr.length?`<ul class="sc-list">${items}</ul>`:`<p class="sc-empty">まだ登録がありません。上の欄から追加してください。</p>`}
+    </div>`;
+}
+
+function settingsView(){
+  const dayCount=Object.keys(state.days).length;
+  return listEditor('shortcuts')+listEditor('mtgShortcuts')+`
     <p class="section-label">データ</p>
     <div class="panel">
       <button class="btn block" data-act="jsonall"${dayCount?'':' disabled'}>すべての記録をJSONで書き出す（${dayCount}日分）</button>
-      <p class="note">日付ごとに、${startLabel()}から翌${startLabel()}までの30分枠をすべて書き出します。記録のない枠の内容は null になります。</p>
+      <p class="note">日付ごとに、0:00から30分枠をすべて書き出します。就寝が日付をまたぐ日は就寝時刻まで含みます。記録のない枠の内容は null になります。</p>
       <hr class="sep">
       <label class="btn block file-btn" for="importFile">JSONファイルを読み込む</label>
       <input type="file" id="importFile" accept=".json,application/json" hidden>
@@ -347,39 +472,6 @@ function settingsView(){
       <p class="note">このツールで書き出したJSONファイルから記録を戻せます。ファイルに入っていない日の記録はそのまま残ります。</p>
     </div>`;
 }
-
-/* ---------- JSON読み込み ---------- */
-function stampAbs(s){const m=/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/.exec(String(s));if(!m)return null;return dnum(m[1])*DAY+(+m[2])*60+(+m[3])}
-function parseImport(text){
-  let obj;try{obj=JSON.parse(text)}catch(e){throw new Error('JSONとして読み取れませんでした。ファイルが壊れていないか確認してください')}
-  if(!obj||!Array.isArray(obj.days))throw new Error('このツールで書き出したJSONではないようです（days の項目がありません）');
-  const sm=/^(\d{2}):(\d{2})$/.exec(obj.dayStart||'06:00');const fS=sm?(+sm[1])*60+(+sm[2]):360;
-  const days={};
-  obj.days.forEach((d,i)=>{
-    const where=`${i+1}日目（${d&&d.date||'日付なし'}）`;
-    if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d.date))throw new Error(where+'の日付が読み取れません');
-    const base=dnum(d.date)*DAY+fS;
-    const off=s=>{const a=stampAbs(s);if(a==null)return null;const o=a-base;return (o>=0&&o<=DAY&&o%30===0)?o:null};
-    const wake=off(d.wake);if(wake==null||wake>=DAY)throw new Error(where+'の起床時間が読み取れません');
-    let sleep=null;if(d.sleep!=null){sleep=off(d.sleep);if(sleep==null||sleep<=wake)throw new Error(where+'の就寝時間が読み取れません')}
-    const log={};
-    (Array.isArray(d.slots)?d.slots:[]).forEach(s=>{if(!s||typeof s.content!=='string'||!s.content.trim())return;
-      const o=off(s.start);if(o==null||o>=DAY)throw new Error(where+'に読み取れない時刻の記録があります');log[o]=s.content});
-    days[d.date]={wake,sleep,log};
-  });
-  if(!Object.keys(days).length)throw new Error('ファイルに日の記録が入っていません');
-  return fS===360?days:rebase(days,fS,360);
-}
-function importAreaHtml(){
-  const p=view.importPending;
-  if(view.importErr)return `<p class="err">${esc(view.importErr)}</p>`;
-  if(!p)return '';
-  const keys=Object.keys(p).sort(),dup=keys.filter(k=>state.days[k]);
-  return `<div class="import-confirm">
-    <p class="note"><b>${fmtDate(keys[0])}〜${fmtDate(keys[keys.length-1])}</b> の ${keys.length}日分を読み込みます。${dup.length?`<br>このうち ${dup.length}日分は同じ日付の記録がすでにあり、ファイルの内容で置き換えます。`:''}</p>
-    <div class="export-actions"><button class="btn primary" data-act="importyes">読み込む</button><button class="btn" data-act="importno">やめる</button></div></div>`;
-}
-function refreshImport(){const el=document.getElementById('importArea');if(el)el.innerHTML=importAreaHtml()}
 
 function manualView(){
   const plus='<span class="k-fab" aria-label="＋ボタン">＋</span>';
@@ -389,8 +481,9 @@ function manualView(){
   <section class="man">
     <h2>基本の流れ</h2>
     <ol class="steps">
-      <li><b>朝、新しい日を作る</b><span>一覧画面の右下にある ${plus} を押します。日付と起床時間を選んで「作成して記録を始める」を押します。</span></li>
+      <li><b>朝、新しい日を作る</b><span>一覧画面の右下にある ${plus} を押します。日付・起床時間・業務時間を選んで「作成して記録を始める」を押します。</span></li>
       <li><b>30分ごとに書く</b><span>起床時間から30分ごとの欄が並びます。その時間にしていたことを書きます。書いた内容は自動で保存されるので、保存ボタンはありません。</span></li>
+      <li><b>仕事かプライベートかを選ぶ</b><span>各欄の「仕事」「プライベート」を押して切り替えます。業務時間の欄は最初から「仕事」になっています。</span></li>
       <li><b>夜、就寝時間を入れる</b><span>画面上部の「就寝時間」を選ぶと、その時刻で1日が締めくくられます。</span></li>
       <li><b>日報に使う</b><span>画面下の「テキストで書き出す」を押すと、日報に貼り付けやすい形で1日分をコピーできます。</span></li>
     </ol>
@@ -398,26 +491,51 @@ function manualView(){
 
   <section class="man">
     <h2>1日の範囲</h2>
-    <p>このツールでは、<b>午前6:00から翌朝6:00まで</b>を1日として扱います。夜ふかしして深夜1時に何かをした場合も、前の日の「翌1:00」の欄に書きます。</p>
+    <p>起床時間は <b>0:00〜23:30</b> の30分単位で選べます。早朝4時や5時に起きた日も、その日の日付で記録できます。</p>
+    <p>就寝が日付をまたぐときは「翌1:00」のように選びます。就寝時間を選ぶまでは、起床から24時間分の欄が表示されます。</p>
+  </section>
+
+  <section class="man">
+    <h2>仕事とプライベート</h2>
+    <p>各欄の左端の色で区分がわかります。<span class="k-tag w">仕事</span> は青、<span class="k-tag p">プライベート</span> は茶色です。</p>
+    <p>その日の <b>業務開始・業務終了</b> を設定すると、その間の欄は最初から「仕事」になり、それ以外は「プライベート」になります。昼休憩など、業務時間中でも仕事でない欄は「プライベート」に切り替えてください。</p>
+    <p>「仕事」の欄では、さらに <b>会議</b> か <b>作業</b> のどちらかを選びます。最初は「作業」になっています。</p>
+  </section>
+
+  <section class="man">
+    <h2>会議を記録する</h2>
+    <p>「会議」を選ぶと、次の4つの欄に切り替わります。</p>
+    <dl class="tips">
+      <dt>会議名</dt><dd>会議の名前。タップすると、登録した会議名のショートカットが並びます。</dd>
+      <dt>評価</dt><dd><span class="k-star">★</span>を押して5段階で評価します。★1が「不毛」、★5が「意義あり」です。同じ★をもう一度押すと評価を取り消せます。</dd>
+      <dt>目的</dt><dd>何のための会議だったか。</dd>
+      <dt>所感</dt><dd>参加して感じたこと、学んだこと。</dd>
+    </dl>
+    <p class="tight">1時間の会議なら、次の欄の「↑同じ」を押すと、会議名や評価ごと同じ内容が入ります。</p>
   </section>
 
   <section class="man">
     <h2>入力を楽にする機能</h2>
     <dl class="tips">
-      <dt>↑同じ</dt><dd>各欄の右にある「↑同じ」を押すと、ひとつ上の欄と同じ内容が入ります。研修や移動など、1時間以上続く活動に便利です。</dd>
-      <dt>ショートカット</dt><dd>入力欄をタップすると、その下に登録済みの言葉が並びます。押すと、その言葉が入力欄に入ります。入れたあとに書き足すこともできます。</dd>
-      <dt>今の時間の目印</dt><dd>今日の記録では、今の時刻の欄の左端に青い線が付きます。</dd>
+      <dt>↑同じ</dt><dd>ひとつ上の欄と同じ内容が入ります。区分（仕事・プライベート、会議・作業）もそろいます。</dd>
+      <dt>ショートカット</dt><dd>記録欄や会議名の欄をタップすると、その下に登録済みの言葉が並びます。押すと、その言葉が入ります。入れたあとに書き足すこともできます。</dd>
+      <dt>今の目印</dt><dd>今の時刻の欄には、時刻の下に「今」と表示されます。</dd>
     </dl>
   </section>
 
   <section class="man">
     <h2>ショートカットを登録する</h2>
-    <p>右上の ${gear} から設定画面を開きます。「ショートカット」の欄に、よく書く言葉（例：朝礼、昼休憩）を入れて「追加」を押します。登録した言葉は「変更」「削除」で直せます。</p>
+    <p>右上の ${gear} から設定画面を開きます。ショートカットは2種類あります。</p>
+    <dl class="tips">
+      <dt>記録</dt><dd>ふだんの記録欄に入れる言葉（例：通勤、昼休憩）。</dd>
+      <dt>会議名</dt><dd>会議名の欄に入れる言葉（例：朝礼、週次定例）。</dd>
+    </dl>
+    <p class="tight">それぞれ、言葉を入れて「追加」を押すと登録されます。「変更」「削除」で直せます。</p>
   </section>
 
   <section class="man">
     <h2>記録を見返す・直す</h2>
-    <p>一覧画面で日付を押すと、その日の記録が開きます。過去の日もそのまま書き直せます。起床時間や就寝時間もあとから変えられます。</p>
+    <p>一覧画面で日付を押すと、その日の記録が開きます。過去の日もそのまま書き直せます。起床・就寝・業務時間もあとから変えられます。</p>
     <p>一覧の緑のバーと「12/30」のような数字は、記入済みの欄の数を表しています。</p>
   </section>
 
@@ -431,14 +549,14 @@ function manualView(){
   </section>
 
   <section class="man">
-    <h2>記録の保存先</h2>
-    <p>記録とショートカットは、<b>今お使いの端末のブラウザの中</b>（ローカルストレージ）に保存されます。インターネット上のサーバーには送られません。</p>
-    <p>そのため、同じ記録を見られるのは、記録したときと同じ端末・同じブラウザだけです。同じスマートフォンでも、Claudeのアプリで開いたときとSafariで開いたときでは保存場所が別になります。</p>
+    <h2>削除</h2>
+    <p>各日の画面のいちばん下にある「この日を削除」を押し、確認で「削除する」を押すと、その日の記録がすべて消えます。元には戻せません。</p>
   </section>
 
   <section class="man">
-    <h2>削除</h2>
-    <p>各日の画面のいちばん下にある「この日を削除」を押し、確認で「削除する」を押すと、その日の記録がすべて消えます。元には戻せません。</p>
+    <h2>記録の保存先</h2>
+    <p>記録とショートカットは、<b>今お使いの端末のブラウザの中</b>（ローカルストレージ）に保存されます。インターネット上のサーバーには送られません。</p>
+    <p>そのため、同じ記録を見られるのは、記録したときと同じ端末・同じブラウザだけです。同じスマートフォンでも、Claudeのアプリで開いたときとSafariで開いたときでは保存場所が別になります。</p>
   </section>
 
   <section class="man caution">
@@ -455,12 +573,20 @@ function manualView(){
   </section>`;
 }
 
+function textLine(day,m){
+  const r=rec(day,m),kind=kindOf(day,m),type=typeOf(day,m);
+  const head=`${tl(m)}-${tl(m+30)}　`;
+  if(type==='meeting'){const g=r.mtg||{},rt=g.rating||0;
+    const extra=[(g.purpose||'').trim()&&'目的：'+g.purpose.trim(),(g.note||'').trim()&&'所感：'+g.note.trim()].filter(Boolean).join('／');
+    return head+`［仕事・会議］${(g.name||'').trim()||'（会議名なし）'}${rt?' '+'★'.repeat(rt)+'☆'.repeat(5-rt)+'（'+RATE[rt]+'）':''}${extra?'　'+extra:''}`}
+  return head+`［${kind==='work'?'仕事・作業':'プライベート'}］${(r.text||'').trim()||'―'}`;
+}
 function exportView(){
   const isJson=view.kind==='json';let body,sub;
   if(isJson){body=buildJson(view.key);sub=view.key?fmtDate(view.key)+'の記録':'すべての記録（'+Object.keys(state.days).length+'日分）'}
   else{const day=state.days[view.key];
-    const lines=[fmtDate(view.key)+'の記録',`起床 ${tl(day.wake)}／就寝 ${day.sleep==null?'未設定':tl(day.sleep)}`,''];
-    slotsOf(day).forEach(m=>lines.push(`${tl(m)}-${tl(m+30)}　${(day.log[m]||'').trim()||'―'}`));
+    const lines=[fmtDate(view.key)+'の記録',`起床 ${tl(day.wake)}／就寝 ${day.sleep==null?'未設定':tl(day.sleep)}／業務 ${workLabel(day)}`,''];
+    slotsOf(day).forEach(m=>lines.push(textLine(day,m)));
     body=lines.join('\n');sub=fmtDate(view.key)+'・日報への貼り付け用'}
   view.body=body;
   return `<p class="lead">${esc(sub)}</p>
@@ -473,25 +599,31 @@ function exportView(){
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-open],[data-act],[data-same],[data-chip]');if(!t)return;
-  if(t.dataset.chip!=null){const row=document.getElementById('scrow'),ta=document.getElementById('s-'+row.dataset.target);if(!ta)return;
-    const txt=state.shortcuts[+t.dataset.chip];const active=document.activeElement===ta;
-    const st=active?ta.selectionStart:ta.value.length,en=active?ta.selectionEnd:ta.value.length;
-    ta.setRangeText(txt,st,en,'end');ta.dispatchEvent(new Event('input',{bubbles:true}));ta.focus();return}
+  const t=e.target.closest('[data-open],[data-act],[data-same],[data-chip],[data-kind],[data-type],[data-star]');if(!t)return;
+  if(t.dataset.chip!=null){const row=document.getElementById('scrow'),el=document.getElementById(row.dataset.target);if(!el)return;
+    const txt=state[row.dataset.list][+t.dataset.chip];const active=document.activeElement===el;
+    const st=active?el.selectionStart:el.value.length,en=active?el.selectionEnd:el.value.length;
+    el.setRangeText(txt,st,en,'end');el.dispatchEvent(new Event('input',{bubbles:true}));el.focus();return}
   if(t.dataset.open){view={name:'day',key:t.dataset.open};render();return}
-  if(t.dataset.same){const m=+t.dataset.same,day=state.days[view.key],prev=day.log[m-30]||'';
-    const ta=document.getElementById('s-'+m);ta.value=prev;ta.dispatchEvent(new Event('input',{bubbles:true}));return}
+  if(view.name==='day'&&(t.dataset.kind||t.dataset.type||t.dataset.star)){const day=state.days[view.key],m=+t.dataset.m;
+    if(t.dataset.kind)upd(day,m,r=>{r.kind=t.dataset.kind});
+    else if(t.dataset.type)upd(day,m,r=>{r.kind='work';r.type=t.dataset.type});
+    else{const n=+t.dataset.star;upd(day,m,r=>{r.mtg=r.mtg||{};r.mtg.rating=r.mtg.rating===n?null:n})}
+    refreshSlot(m);return}
+  if(t.dataset.same){const day=state.days[view.key],m=+t.dataset.same,p=m-30;
+    const r=JSON.parse(JSON.stringify(rec(day,p)));r.kind=kindOf(day,p);if(r.kind==='work')r.type=typeOf(day,p);else delete r.type;
+    prune(r);day.log[m]=r;if(day.sample)delete day.sample;save();refreshSlot(m);return}
   const a=t.dataset.act;
-  if(a==='manual'){view={name:'manual'};render();return}
-  if(a==='settings'){if(view.name==='settings')return;view={name:'settings',from:view.name==='day'?view.key:null};render()}
+  if(a==='manual'){view={name:'manual'};render()}
+  else if(a==='settings'){if(view.name==='settings')return;view={name:'settings',from:view.name==='day'?view.key:null};render()}
   else if(a==='settingsback'){view=view.from?{name:'day',key:view.from}:{name:'list'};render()}
   else if(a==='importno'){view.importPending=null;view.importErr='';refreshImport()}
   else if(a==='importyes'){const p=view.importPending;if(!p)return;const n=Object.keys(p).length;
     Object.assign(state.days,p);save();view.importPending=null;view.keepScroll=window.scrollY;render();toast(n+'日分を読み込みました')}
-  else if(a==='scedit'){view.editIdx=+t.dataset.idx;view.delIdx=null;view.err='';view.keepScroll=window.scrollY;render()}
-  else if(a==='scdel'){view.delIdx=+t.dataset.idx;view.editIdx=null;view.err='';view.keepScroll=window.scrollY;render()}
-  else if(a==='sccancel'){view.delIdx=null;view.editIdx=null;view.err='';view.keepScroll=window.scrollY;render()}
-  else if(a==='scdelyes'){state.shortcuts.splice(+t.dataset.idx,1);save();view.delIdx=null;view.keepScroll=window.scrollY;render();toast('削除しました')}
+  else if(a==='scedit'){view.edit={list:t.dataset.list,idx:+t.dataset.idx};view.del=null;view.err=null;view.keepScroll=window.scrollY;render()}
+  else if(a==='scdel'){view.del={list:t.dataset.list,idx:+t.dataset.idx};view.edit=null;view.err=null;view.keepScroll=window.scrollY;render()}
+  else if(a==='sccancel'){view.del=null;view.edit=null;view.err=null;view.keepScroll=window.scrollY;render()}
+  else if(a==='scdelyes'){state[t.dataset.list].splice(+t.dataset.idx,1);save();view.del=null;view.keepScroll=window.scrollY;render();toast('削除しました')}
   else if(a==='new'){view={name:'new'};render()}
   else if(a==='back'){view={name:'list'};render()}
   else if(a==='text'||a==='json'){view={name:'export',kind:a,key:view.key,ret:{name:'day',key:view.key}};render()}
@@ -514,27 +646,32 @@ document.addEventListener('click',e=>{
 });
 
 document.addEventListener('submit',e=>{
-  if(e.target.id==='scAddForm'||e.target.id==='scEditForm'){e.preventDefault();
-    const isEdit=e.target.id==='scEditForm',idx=isEdit?+e.target.dataset.idx:-1;
-    const v=cleanText(document.getElementById(isEdit?'scEdit':'scNew').value);
-    const fail=m=>{const el=document.getElementById('scErr');el.textContent=m;el.hidden=false};
+  const f=e.target;
+  if(f.classList.contains('sc-add')||f.id==='scEditForm'){e.preventDefault();
+    const list=f.dataset.list,isEdit=f.id==='scEditForm',idx=isEdit?+f.dataset.idx:-1;
+    const v=cleanText((isEdit?document.getElementById('scEdit'):document.getElementById('new-'+list)).value);
+    const fail=m=>{const el=document.getElementById('err-'+list);el.textContent=m;el.hidden=false};
     if(!v)return fail('文字を入力してください');
-    if(state.shortcuts.some((s,i)=>s===v&&i!==idx))return fail('同じショートカットがすでに登録されています');
-    if(isEdit){state.shortcuts[idx]=v;view.editIdx=null;view.keepScroll=window.scrollY}else{state.shortcuts.push(v);view.focusAdd=true}
-    view.err='';save();render();toast(isEdit?'変更しました':'追加しました');return}
-  if(e.target.id!=='newForm')return;e.preventDefault();
+    if(state[list].some((s,i)=>s===v&&i!==idx))return fail('同じ言葉がすでに登録されています');
+    if(isEdit){state[list][idx]=v;view.edit=null}else{state[list].push(v);view.focusAdd=list}
+    view.keepScroll=window.scrollY;view.err=null;save();render();toast(isEdit?'変更しました':'追加しました');return}
+  if(f.id!=='newForm')return;e.preventDefault();
   const k=document.getElementById('nDate').value,err=document.getElementById('nErr');
-  if(!k){err.textContent='日付を選んでください';err.hidden=false;return}
-  if(state.days[k]){err.textContent='この日付の記録はすでにあります。一覧から開いてください';err.hidden=false;return}
-  state.days[k]={wake:+document.getElementById('nWake').value,sleep:null,log:{}};save();
+  const fail=m=>{err.textContent=m;err.hidden=false};
+  if(!k)return fail('日付を選んでください');
+  if(state.days[k])return fail('この日付の記録はすでにあります。一覧から開いてください');
+  const wsv=document.getElementById('nWS').value,wev=document.getElementById('nWE').value;
+  if((wsv==='')!==(wev===''))return fail('業務時間は開始と終了の両方を選ぶか、両方とも未設定にしてください');
+  if(wsv!==''&&+wev<=+wsv)return fail('業務終了は業務開始より後の時刻にしてください');
+  state.days[k]={wake:+document.getElementById('nWake').value,sleep:null,workStart:wsv===''?null:+wsv,workEnd:wev===''?null:+wev,log:{}};save();
   view={name:'day',key:k};render();toast('作成しました');
 });
 
 document.addEventListener('input',e=>{
-  const s=e.target.dataset&&e.target.dataset.slot;if(s==null)return;
-  const day=state.days[view.key];day.log[s]=e.target.value;if(day.sample)delete day.sample;save();
-  e.target.closest('.slot').classList.toggle('done',!!e.target.value.trim());
-  const c=document.getElementById('dCount');if(c){const sl=slotsOf(day);c.textContent=sl.filter(m=>(day.log[m]||'').trim()).length+'/'+sl.length}
+  const el=e.target;if(view.name!=='day'||!el.dataset||el.dataset.field==null)return;
+  const day=state.days[view.key],m=+el.dataset.m,fd=el.dataset.field;
+  upd(day,m,r=>{if(fd==='text')r.text=el.value;else{r.mtg=r.mtg||{};r.mtg[fd]=el.value}});
+  const s=document.getElementById('slot-'+m);if(s)s.classList.toggle('done',filled(day,m));refreshCount();
 });
 
 document.addEventListener('change',e=>{
@@ -543,25 +680,32 @@ document.addEventListener('change',e=>{
     r.onload=()=>{try{view.importPending=parseImport(r.result);view.importErr=''}catch(err){view.importPending=null;view.importErr=err.message}refreshImport()};
     r.onerror=()=>{view.importPending=null;view.importErr='ファイルを開けませんでした。もう一度選び直してください';refreshImport()};
     r.readAsText(f);return}
-  if(view.name!=='day')return;const day=state.days[view.key];
-  if(e.target.id==='dWake'){day.wake=+e.target.value;save();render()}
-  if(e.target.id==='dSleep'){day.sleep=e.target.value===''?null:+e.target.value;save();render()}
+  if(view.name!=='day')return;const day=state.days[view.key],v=e.target.value,num=v===''?null:+v;let msg='';
+  if(e.target.id==='dWake'){day.wake=num;if(day.sleep!=null&&(day.sleep<=day.wake||day.sleep>day.wake+DAY)){day.sleep=null;msg='就寝時間を未設定に戻しました'}}
+  else if(e.target.id==='dSleep'){day.sleep=num}
+  else if(e.target.id==='dWS'){day.workStart=num;if(num==null)day.workEnd=null;else if(day.workEnd==null||day.workEnd<=num){day.workEnd=null;msg='業務終了を選んでください'}}
+  else if(e.target.id==='dWE'){day.workEnd=num;if(num==null)day.workStart=null}
+  else return;
+  if(day.sample)delete day.sample;save();view.keepScroll=window.scrollY;render();if(msg)toast(msg);
 });
 
-/* 記録欄にフォーカスしたら、その枠の下にショートカット候補を出す */
+/* 記録欄・会議名の欄にフォーカスしたら、その下にショートカット候補を出す */
 document.addEventListener('focusin',e=>{
-  const ta=e.target;if(!ta.dataset||ta.dataset.slot==null)return;
+  const el=e.target;if(!el.dataset||!el.dataset.sc)return;
+  const list=el.dataset.sc,arr=state[list];
   let row=document.getElementById('scrow');
   if(!row){row=document.createElement('div');row.id='scrow';row.className='scrow'}
-  row.innerHTML=(state.shortcuts.length?state.shortcuts.map((s,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(s)}</button>`).join(''):'<span class="note">ショートカット未登録</span>')
+  row.innerHTML=(arr.length?arr.map((s,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(s)}</button>`).join(''):'<span class="note">ショートカット未登録</span>')
     +'<button type="button" class="chip edit" data-act="settings">＋ 編集</button>';
-  row.dataset.target=ta.dataset.slot;const slot=ta.closest('.slot');slot.appendChild(row);row.hidden=false;
-  setTimeout(()=>{try{slot.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(err){}},300);
+  row.dataset.target=el.id;row.dataset.list=list;
+  const anchor=el.closest('.mf')||el;anchor.insertAdjacentElement('afterend',row);row.hidden=false;
+  const slot=el.closest('.slot');
+  setTimeout(()=>{try{(slot||row).scrollIntoView({block:'nearest',behavior:'smooth'})}catch(err){}},300);
 });
 document.addEventListener('focusout',e=>{
-  if(!e.target.dataset||e.target.dataset.slot==null)return;
+  if(!e.target.dataset||!e.target.dataset.sc)return;
   setTimeout(()=>{const row=document.getElementById('scrow'),a=document.activeElement;
-    if(row&&!(a&&a.dataset&&a.dataset.slot!=null))row.hidden=true},200);
+    if(row&&!(a&&a.dataset&&a.dataset.sc))row.hidden=true},200);
 });
 ['pointerdown','mousedown'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest('#scrow .chip'))e.preventDefault()}));
 
